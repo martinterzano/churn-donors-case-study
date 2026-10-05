@@ -10,6 +10,8 @@
 
 **Sector:** non-profit · **Role:** end-to-end (data, feature engineering, modelling, validation, operational segmentation, handoff) · **Stack:** Python, scikit-learn, Random Forest, BigQuery, GCP · **Cadence:** monthly scoring · **Status:** validated, scoring notebook operational, handed off for production deployment
 
+*Writeup prepared October 2026; the implementation is client property.*
+
 The client owns the exact business metrics and internal identifiers. This case
 study describes how the problem was framed, how the model was built, and how
 the system reasons, without publishing client data, feature names, or raw
