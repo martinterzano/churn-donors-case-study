@@ -3,12 +3,12 @@
 > Monthly classification model that scores an NGO's active recurring donors by
 > their probability of missing the next monthly gift. Random Forest with isotonic
 > calibration, validated across 13 quarterly walk-forward folds over a four-year
-> history, and operationalised as a four-segment retention playbook. Shipped as a
+> history, and operationalized as a four-segment retention playbook. Shipped as a
 > scoring notebook feeding BigQuery for downstream retention outreach. One of
 > two branches of a shared scoping phase. The other branch, propensity for a
 > second gift from one-time donors, did not reach production (see §12).
 
-**Sector:** non-profit · **Role:** end-to-end (data, feature engineering, modelling, validation, operational segmentation, handoff) · **Stack:** Python, scikit-learn, Random Forest, BigQuery, GCP · **Cadence:** monthly scoring · **Status:** validated, scoring notebook operational, handed off for production deployment
+**Sector:** non-profit · **Role:** end-to-end (data, feature engineering, modeling, validation, operational segmentation, handoff) · **Stack:** Python, scikit-learn, Random Forest, BigQuery, GCP · **Cadence:** monthly scoring · **Status:** validated, scoring notebook operational, handed off for production deployment
 
 *Writeup prepared October 2026; the implementation is client property.*
 
@@ -23,7 +23,7 @@ magnitude.
 ## Contents
 
 1. [The problem](#1-the-problem)
-2. [Scoping: recurring donors as a cleanly-labelled subset](#2-scoping-recurring-donors-as-a-cleanly-labelled-subset)
+2. [Scoping: recurring donors as a cleanly-labeled subset](#2-scoping-recurring-donors-as-a-cleanly-labeled-subset)
 3. [Engineering architecture and shared pipeline](#3-engineering-architecture-and-shared-pipeline)
 4. [Validation strategy: walk-forward over quarterly snapshots](#4-validation-strategy-walk-forward-over-quarterly-snapshots)
 5. [The experiment grid: what we varied and why](#5-the-experiment-grid-what-we-varied-and-why)
@@ -54,12 +54,12 @@ capacity across donors who are not actually at risk.
 
 The question the model was designed to answer. For each active recurring donor,
 what is the probability that they will miss their next monthly gift, so the
-retention team can prioritise outreach by risk?
+retention team can prioritize outreach by risk?
 
 The deliverable is a scored list refreshed monthly, with donors sorted into
 operational segments that each have a documented retention action (see §9).
 
-## 2. Scoping: recurring donors as a cleanly-labelled subset
+## 2. Scoping: recurring donors as a cleanly-labeled subset
 
 The project started from a broader engagement with the client around donor
 reengagement. During scoping, two distinct generative processes for
@@ -97,7 +97,7 @@ each a separate module.
 
 ```
 Pipeline([
-    ('mapper',           FeatureMapper()),       # categorical normalisation
+    ('mapper',           FeatureMapper()),       # categorical normalization
     ('feature_engineer', ChurnFeatureEngineer()),# churn-specific derived features
     ('outlier_clipper',  OutlierClipper()),      # per-column quantile clipping
     ('preprocess',       build_preprocessor()),  # impute + scale + one-hot
@@ -107,17 +107,17 @@ Pipeline([
 
 Four of the five stages are **inherited verbatim** from the propensity
 project (`FeatureMapper`, `OutlierClipper`, `build_preprocessor`,
-`get_model`). One is **specialised**: `ChurnFeatureEngineer` replaces the
+`get_model`). One is **specialized**: `ChurnFeatureEngineer` replaces the
 propensity-era `FeatureEngineer` because the derived features that matter for
 churn (recency relative to historical cadence, gap patterns, recent-window
-counts) are a different catalogue from the propensity-era features (log and
+counts) are a different catalog from the propensity-era features (log and
 bucket of the first-gift amount, timing-within-year flags).
 
-This split is deliberate. Shared infrastructure where behaviour is identical
+This split is deliberate. Shared infrastructure where behavior is identical
 across projects; project-specific modules where it should not be. Reusing
 `OutlierClipper` meant the clipping policy was already battle-tested on the
 previous project's data. Reusing `build_preprocessor` meant the imputation
-and encoding behaviour had been validated. Writing a new `FeatureEngineer`
+and encoding behavior had been validated. Writing a new `FeatureEngineer`
 subclass meant the churn-specific features were not shoehorned into the
 propensity shape.
 
@@ -134,7 +134,7 @@ SNAPSHOT_START        = '2022-06-01'
 SNAPSHOT_END          = '2025-12-31'
 
 # ── Feature set ───────────────────────────────────────────────
-NUMERIC_FEATURES     = [...]     # the churn-specific numeric catalogue
+NUMERIC_FEATURES     = [...]     # the churn-specific numeric catalog
 CATEGORICAL_FEATURES = [...]
 FEATURE_COLS         = NUMERIC_FEATURES + CATEGORICAL_FEATURES
 
@@ -242,7 +242,7 @@ Each fold produces its own set of metrics. The aggregate across folds is the
 headline number; the per-fold distribution is what matters for stability
 diagnosis. Two patterns surfaced from the fold-level view:
 
-- **Q2 seasonal dip across all three years.** Folds 3, 7, and 11 (validation on April snapshots) show a lower churn rate than the surrounding folds (around 5% versus the ~10% population average). The dip is consistent across all three years in the training history, which rules out a data artefact and points at a seasonal giving pattern. The model performs less reliably on Q2 folds. Expect lower AUC-PR in April predictions.
+- **Q2 seasonal dip across all three years.** Folds 3, 7, and 11 (validation on April snapshots) show a lower churn rate than the surrounding folds (around 5% versus the ~10% population average). The dip is consistent across all three years in the training history, which rules out a data artifact and points at a seasonal giving pattern. The model performs less reliably on Q2 folds. Expect lower AUC-PR in April predictions.
 - **Fold 13 (validation on October 2025) shows a higher baseline churn rate (~14%)** than the historical ~10% average. Worth monitoring whether this is a trend or a one-off spike.
 
 The per-fold reporting is logged to BigQuery (see §13), so trend analysis
@@ -295,7 +295,7 @@ work with.
 
 At `active_threshold_days = 35`, donors in the pool have barely gone past
 their normal monthly cycle. The majority are still perfectly on-track from a
-behavioural standpoint; a few are starting to deteriorate but the features
+behavioral standpoint; a few are starting to deteriorate but the features
 cannot tell them apart yet. The model is being asked to predict churn from
 noise, and the AUC-PR of 0.16 reflects that.
 
@@ -310,7 +310,7 @@ would mean producing scores that are structurally close to random, which is
 worse than not producing scores at all.
 
 This is a hard limit of the current feature set. A different feature set
-(behavioural engagement data, email interaction history, cause-page visits)
+(behavioral engagement data, email interaction history, cause-page visits)
 might carry earlier-stage signal that lets the threshold be relaxed. That is
 noted as a future-version path. In this version, 90 days is the correct call.
 
@@ -330,7 +330,7 @@ The pattern tells us something beyond "RF is better". The gap widens as the
 problem gets harder, which is a signature of non-linearity. The relationship
 between recency features and churn probability is not monotone. A donor who
 is slightly late (last interval 32 days vs. their 30-day baseline) is
-behaviourally similar to an on-time donor. A donor who is moderately late
+behaviorally similar to an on-time donor. A donor who is moderately late
 (45 days) is a different animal. A donor who is very late (60+ days) is
 different again. Trees capture these regime changes naturally; a linear model
 has to approximate them with coefficients that get pulled in opposite
@@ -363,7 +363,7 @@ where every positive sample matters.
 
 Random Forest outputs a probability-like score that is a good ranker but a
 poor probability estimator. Predicted probabilities tend to compress toward
-the centre of the distribution (RF rarely predicts near 0 or 1), and the
+the center of the distribution (RF rarely predicts near 0 or 1), and the
 raw scores do not match observed churn rates in the way a well-calibrated
 model should.
 
@@ -372,7 +372,7 @@ matter. Any monotonic transformation preserves ranking. It matters here for
 two downstream reasons:
 
 - The segmentation strategy (§9) uses probability bands within recency groups ("top 20% of model probability inside the Early-recency band"). Band membership is directly sensitive to probability values, not just rankings.
-- The retention team talks in probability language when prioritising cases ("this donor has an 80% chance of churning"). A probability that does not match reality is worse than no probability at all.
+- The retention team talks in probability language when prioritizing cases ("this donor has an 80% chance of churning"). A probability that does not match reality is worse than no probability at all.
 
 Calibration is applied with `CalibratedClassifierCV(method="isotonic", cv=5)`
 as a wrapper around the base RF. Isotonic over Platt for two reasons:
@@ -380,7 +380,7 @@ as a wrapper around the base RF. Isotonic over Platt for two reasons:
 | Method | Assumes | Fit here |
 |---|---|---|
 | Platt scaling (sigmoid) | A sigmoid relationship between raw score and true probability. Two parameters. | Fine on small validation sets; too stiff for non-sigmoid miscalibration. |
-| Isotonic regression | Only that the mapping is monotonic. Non-parametric, piecewise-constant. | Fits the compressed-toward-centre pattern RF produces, without forcing it into a sigmoid shape. |
+| Isotonic regression | Only that the mapping is monotonic. Non-parametric, piecewise-constant. | Fits the compressed-toward-center pattern RF produces, without forcing it into a sigmoid shape. |
 
 The validation set has enough positive samples per fold for isotonic's
 flexibility to earn its extra parameters without overfitting. The pattern is
@@ -404,7 +404,7 @@ this version; see §11.
 
 ### 9.1 Which metric drives decisions, and which doesn't
 
-**ROC-AUC, reported but not optimised.** With a ~10% churn rate, the confusion
+**ROC-AUC, reported but not optimized.** With a ~10% churn rate, the confusion
 matrix is dominated by True Negatives. The model classifies ~90% of the
 population as not-churn almost for free, which inflates ROC-AUC toward high
 values even for mediocre models. ROC-AUC of 0.89 sounds strong and tells us
@@ -416,7 +416,7 @@ ranking of the positive class and is not diluted by True Negatives. It is the
 correct metric under this class imbalance, and it is the one that moved most
 across experiments (see §5). AUC-PR is what told us the winning configuration
 (RF + 90-day threshold + 30-day window + full features) is actually better
-than its neighbours in the grid.
+than its neighbors in the grid.
 
 **Recall@top-K and precision-within-segment, the operational metrics.** The
 retention team acts on segments, not on the global ranking. The relevant
@@ -450,7 +450,7 @@ makes sense; model percentile determines priority inside that outreach queue.
 
 | Segment | Recency band | Model filter | Approx. monthly volume | Recommended action |
 |---|---|---|---|---|
-| **Critical** | At-Risk (>60 days since last gift) | All | ~230 | Personalised "we miss you" outreach by phone or direct mail. By this point departure is nearly certain without intervention. |
+| **Critical** | At-Risk (>60 days since last gift) | All | ~230 | Personalized "we miss you" outreach by phone or direct mail. By this point departure is nearly certain without intervention. |
 | **High Priority** | Mid (31–60 days) | Top 40% of model percentile within band | ~100–150 | Personal retention outreach within the week. Model precision ~75%. |
 | **Medium Priority** | Early (0–30 days) | Top 20% of model percentile within band | ~200–300 | Light-touch automated email (thank-you, impact story, gentle check-in). This is where the model adds the most unique value. |
 | **Monitor** | Early (0–30 days) | Below top 20% | ~600–800 | No active campaign, standard donor communication cadence. Reassess next month. |
@@ -517,10 +517,10 @@ the roadmap for a v2.
 
 ### 11.4 Engineering hygiene
 
-- **`pickle` instead of `joblib` for model persistence.** `joblib` is sklearn's recommended serialisation for objects containing large numpy arrays (which an RF with 100 trees certainly is). Low risk at current scale, higher risk once the model is in a production pipeline and sklearn is upgraded.
-- **No unit tests on the feature-engineering pipeline.** `build_snapshot_features()` and `build_scoring_features()` have no coverage. A silent error (a join that drops rows, a scaler that applies the wrong normalisation) would surface only when monthly scores look wrong. Minimum useful test battery: no-future-leak invariance, row-count invariance in/out of feature construction, no inf/nan in derived features.
+- **`pickle` instead of `joblib` for model persistence.** `joblib` is sklearn's recommended serialization for objects containing large numpy arrays (which an RF with 100 trees certainly is). Low risk at current scale, higher risk once the model is in a production pipeline and sklearn is upgraded.
+- **No unit tests on the feature-engineering pipeline.** `build_snapshot_features()` and `build_scoring_features()` have no coverage. A silent error (a join that drops rows, a scaler that applies the wrong normalization) would surface only when monthly scores look wrong. Minimum useful test battery: no-future-leak invariance, row-count invariance in/out of feature construction, no inf/nan in derived features.
 
-These items are not surprises. They are tracked and prioritised. The point of
+These items are not surprises. They are tracked and prioritized. The point of
 listing them here is that a case study that only documents what went well is
 less useful than one that also documents what the next engineer picking up
 the project needs to resolve first.
@@ -536,7 +536,7 @@ accepted the recommendation.
 The two projects share the client, the data engineering pipeline, parts of
 the sklearn preprocessing architecture, and the scoping decision that
 separated the two populations in the first place. They do not share the
-modelling problem. The clean monthly cadence of recurring donors is exactly
+modeling problem. The clean monthly cadence of recurring donors is exactly
 what made the churn problem tractable in this feature set; the absence of a
 cadence equivalent on the one-time side is exactly what made the propensity
 problem harder.
@@ -549,7 +549,7 @@ Companion case study: [propensity-case-study](https://github.com/martinterzano/p
 
 - **No automated monthly scoring DAG.** The scoring notebook runs on demand and writes to a BigQuery table. Converting it to a scheduled job was scoped to the engineering handoff, since the business was comfortable running it manually at the start of each month during the ramp-up. Flagged as phase 2.
 - **No automated retraining trigger.** The model is retrained manually when a quarterly snapshot's drift justifies it. A metric-based automated trigger is a reasonable next step and intentionally not implemented at the handoff point.
-- **No A/B infrastructure.** The model's incrementality against the pre-existing retention workflow is measured retrospectively by comparing contacted donors' retention to a hold-out of uncontacted donors at the same risk level. A proper A/B test is on the roadmap once baseline operational metrics have stabilised.
+- **No A/B infrastructure.** The model's incrementality against the pre-existing retention workflow is measured retrospectively by comparing contacted donors' retention to a hold-out of uncontacted donors at the same risk level. A proper A/B test is on the roadmap once baseline operational metrics have stabilized.
 
 ### 13.2 What is in this repo
 
@@ -576,7 +576,7 @@ taxonomies.
 - **A single parameter can gate the entire project.** `active_threshold_days = 90` is not a hyperparameter in the usual sense. It is a definition-of-the-problem parameter, and the model's AUC-PR drops by 70% when it is relaxed to 35 days. Treating it as "just another knob" would have hidden the fact that the feature set has a hard limit on how early it can detect churn.
 - **AUC-PR over ROC-AUC under class imbalance.** With ~10% churn, ROC-AUC is dominated by True Negatives and inflates easily. AUC-PR evaluates the ranking of the positive class only, and it is the metric that moves between experiments.
 - **Random Forest over Logistic Regression as a diagnostic, not just a performance choice.** The pattern of RF beating Logistic Regression by increasing margins as the problem gets harder is a signature of non-linearity in the feature-to-churn relationship. The model choice confirmed the hypothesis that recency features interact in a regime-dependent way.
-- **Separating ranking and calibration as independent artefacts.** The RF ranks; the isotonic wrapper calibrates. They evolve independently, and a future recalibration pass can be run without retraining the ranker.
+- **Separating ranking and calibration as independent artifacts.** The RF ranks; the isotonic wrapper calibrates. They evolve independently, and a future recalibration pass can be run without retraining the ranker.
 - **Operational segmentation that reflects where the model actually adds value.** The four-segment playbook does not treat all segments equally. The analysis in §10 makes explicit that the model's unique value is in the Early-recency band, where no rule-based system would flag anything, and that is where any future feature work should be targeted.
 - **An honest gap list at handoff.** The §11 inventory is the kind of document that gets lost if it is not written down at the moment of handoff. Making it explicit is what distinguishes "finished for me" from "ready for someone else to pick up".
 - **Shared infrastructure as a seniority signal.** The modular pipeline described in §3 was inherited from the earlier propensity project (§12), extended with a project-specific config file and a two-table experiment logger, and left in a shape that the next DS can keep extending. Reusable scaffolding across projects is a deliberate choice at a seniority level, not an accident of two projects running at the same time.
